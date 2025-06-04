@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocp-monitor-agent
+  namespace: llama-serve
+  labels:
+    app: ocp-monitor-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ocp-monitor-agent
+  template:
+    metadata:
+      labels:
+        app: ocp-monitor-agent
+    spec:
+      containers:
+      - name: ocp-monitor-agent
+        image: quay.io/eranco74/agent:10
+        env:
+        - name: REMOTE_BASE_URL
+          value: "http://llamastack-server:8321"
+        - name: NAMESPACE
+          value: "llama-serve"
+        - name: TEMPERATURE
+          value: "0.0"
+        - name: TOP_P
+          value: "0.95"
+        - name: MAX_TOKENS
+          value: "512"
+        - name: VDB_EMBEDDING
+          value: "all-MiniLM-L6-v2"
+        - name: VDB_EMBEDDING_DIMENSION
+          value: "384"
+        - name: VECTOR_DB_CHUNK_SIZE
+          value: "512"
+        - name: VDB_PROVIDER
+          value: "milvus"
+        - name: STREAM
+          value: "False"
+        - name: REMOTE_OCP_MCP_URL
+          value: "http://ocp-mcp-server:8000/sse"
+        - name: REMOTE_SLACK_MCP_URL
+          value: "http://slack-mcp-server:8000/sse"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        imagePullPolicy: Always
