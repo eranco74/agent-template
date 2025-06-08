@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ocp-monitor-agent
+  name: pods-monitoring-agent
   namespace: llama-serve
   labels:
-    app: ocp-monitor-agent
+    app: monitor-agent
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ocp-monitor-agent
+      app: monitor-agent
   template:
     metadata:
       labels:
-        app: ocp-monitor-agent
+        app: monitor-agent
     spec:
       containers:
-      - name: ocp-monitor-agent
+      - name: monitor-agent
         image: quay.io/eranco74/agent:10
         env:
         - name: REMOTE_BASE_URL
           value: "http://llamastack-server:8321"
         - name: NAMESPACE
-          value: "llama-serve"
+          value: "demo"
         - name: TEMPERATURE
           value: "0.0"
         - name: TOP_P

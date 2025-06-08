@@ -6,44 +6,25 @@ from llama_stack_client import RAGDocument
 from llama_stack_client.lib.agents.react.agent import ReActAgent
 from llama_stack_client.lib.agents.react.tool_parser import ReActOutput
 
-import sys
 import time
 import uuid
 import os
-from dotenv import load_dotenv
 from utils import step_logger
 
-load_dotenv()
-
-base_url = os.getenv("REMOTE_BASE_URL")
-namespace = os.getenv("NAMESPACE", "llama-serve")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Get a logger instance
 logger = logging.getLogger(__name__)
 
-logger.info("Connected to Llama Stack server")
+logger.info("Starting the agent setup...")
+
+base_url = os.getenv("REMOTE_BASE_URL")
+namespace = os.getenv("NAMESPACE", "llama-serve")
 
 # model_id will later be used to pass the name of the desired inference model to Llama Stack Agents/Inference APIs
 model_id = "granite32-8b"
-# TODO: remove this
-temperature = float(os.getenv("TEMPERATURE", 0.0))
-if temperature > 0.0:
-    top_p = float(os.getenv("TOP_P", 0.95))
-    strategy = {"type": "top_p", "temperature": temperature, "top_p": top_p}
-else:
-    strategy = {"type": "greedy"}
-
-max_tokens = int(os.getenv("MAX_TOKENS", 512))
-
-# sampling_params will later be used to pass the parameters to Llama Stack Agents/Inference APIs
-sampling_params = {
-    "strategy": strategy,
-    "max_tokens": max_tokens,
-}
 
 # For this demo, we are using Milvus Lite, which is our preferred solution. Any other Vector DB supported by Llama Stack can be used.
-
 # RAG vector DB settings
 VECTOR_DB_EMBEDDING_MODEL = os.getenv("VDB_EMBEDDING")
 VECTOR_DB_EMBEDDING_DIMENSION = int(os.getenv("VDB_EMBEDDING_DIMENSION", 384))
@@ -51,8 +32,26 @@ VECTOR_DB_CHUNK_SIZE = int(os.getenv("VECTOR_DB_CHUNK_SIZE", 512))
 VECTOR_DB_PROVIDER_ID = os.getenv("VDB_PROVIDER")
 
 # Unique DB ID for session
-vector_db_id = f"test_vector_db_{uuid.uuid4()}"
+vector_db_id = f"vector_db_{uuid.uuid4()}"
 
+def get_sampling_params():
+    temperature = float(os.getenv("TEMPERATURE", 0.0))
+    if temperature > 0.0:
+        top_p = float(os.getenv("TOP_P", 0.95))
+        strategy = {"type": "top_p", "temperature": temperature, "top_p": top_p}
+    else:
+        strategy = {"type": "greedy"}
+
+    max_tokens = int(os.getenv("MAX_TOKENS", 512))
+
+# sampling_params will later be used to pass the parameters to Llama Stack Agents/Inference APIs
+    sampling_params = {
+    "strategy": strategy,
+    "max_tokens": max_tokens,
+}
+    
+    return sampling_params
+sampling_params = get_sampling_params()
 logger.info(f"Inference Parameters:\tModel: {model_id}\tSampling Parameters: {sampling_params}")
 
 # Optional: Enter your MCP server URL here
@@ -154,11 +153,9 @@ Whenever a tool is called, be sure return the Response in a friendly and helpful
                 },
             ),"mcp::openshift", "mcp::slack"],
         tool_config={"tool_choice":"auto"},
-        sampling_params=sampling_params
+        sampling_params = sampling_params
     )
     return agent
-
-
 
 def run_agent_monitoring(agent_instance, target_namespace, use_stream=False):
     """
@@ -171,16 +168,12 @@ def run_agent_monitoring(agent_instance, target_namespace, use_stream=False):
     """
     session_id = agent_instance.create_session(session_name=f"OCP_Slack_Pod_Monitor_{int(time.time())}")
 
-    # The prompt should be comprehensive, telling the agent what to do,
-    # and crucially, that it should only notify on *new* errors.
-    # The agent's internal tools/memory will handle the "if already notified" logic.
-
     logger.info(f"Triggering agent for pod monitoring in namespace '{target_namespace}' at {time.ctime()}...")
 
     user_prompts = [
         f"list the pods in {target_namespace} OpenShift namespace, if the pod status is in error state check the conditions and pod logs.",
         "Search for solutions on this error and provide a summary of the steps to take in just 1-2 sentences.",
-        """Send a Slack message to the 'demos' channel for each pod that has an error summary.
+        """Send a Slack message to the 'unlocking-innovation' channel for each pod that has an error summary.
         # Use this format:
         # "⚠️ Pod '{pod-name}' is in an error state. {summary}"
         """
@@ -212,5 +205,5 @@ if __name__ == "__main__":
             print(f"An error occurred during agent monitoring: {e}")
             # Implement more robust error handling if needed, e.g., logging to a file
 
-        print(f"Waiting for 1 minute before next check... (Next check at {time.ctime(time.time() + 60)})")
-        time.sleep(60) # Wait for 60 seconds (1 minute)
+        print(f"Waiting for 5 minutes before next check... (Next check at {time.ctime(time.time() + 300)})")
+        time.sleep(300) # Wait for 5 minutes (300 seconds) 
