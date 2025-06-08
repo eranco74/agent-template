@@ -22,7 +22,7 @@ spec:
         - name: REMOTE_BASE_URL
           value: "http://llamastack-server:8321"
         - name: NAMESPACE
-          value: "demo"
+          value: "default"
         - name: TEMPERATURE
           value: "0.0"
         - name: TOP_P

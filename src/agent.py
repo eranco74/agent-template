@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 logger.info("Starting the agent setup...")
 
 base_url = os.getenv("REMOTE_BASE_URL")
-namespace = os.getenv("NAMESPACE", "llama-serve")
+namespace = os.getenv("NAMESPACE", "default")
 
 # model_id will later be used to pass the name of the desired inference model to Llama Stack Agents/Inference APIs
 model_id = "granite32-8b"
@@ -119,7 +119,7 @@ def define_rag(client: LlamaStackClient):
     ]
     documents = [
         RAGDocument(
-            document_id=f"num-{i}",
+            document_id=f"doc-{i}",
             content=url,
             mime_type=url_type,
             metadata={},
@@ -157,28 +157,22 @@ Whenever a tool is called, be sure return the Response in a friendly and helpful
     )
     return agent
 
-def run_agent_monitoring(agent_instance, target_namespace, use_stream=False):
+def run_task(agent_instance: Agent, namespace: str, use_stream=False):
     """
-    Triggers the agent to perform its monitoring tasks for all pods in the namespace,
-    with internal logic for preventing duplicate Slack notifications.
+    Triggers the agent to perform its task.
+    
     Args:
         agent_instance (Agent): The agent instance to use for monitoring.
-        target_namespace (str): The OpenShift namespace to monitor.
+        namespace (str): The namespace in which the agent operates.
         use_stream (bool): Whether to stream the agent's response in real-time.
     """
-    session_id = agent_instance.create_session(session_name=f"OCP_Slack_Pod_Monitor_{int(time.time())}")
 
-    logger.info(f"Triggering agent for pod monitoring in namespace '{target_namespace}' at {time.ctime()}...")
+    logger.info(f"Triggering agent'' at {time.ctime()}...")
 
     user_prompts = [
-        f"list the pods in {target_namespace} OpenShift namespace, if the pod status is in error state check the conditions and pod logs.",
-        "Search for solutions on this error and provide a summary of the steps to take in just 1-2 sentences.",
-        """Send a Slack message to the 'unlocking-innovation' channel for each pod that has an error summary.
-        # Use this format:
-        # "⚠️ Pod '{pod-name}' is in an error state. {summary}"
-        """
-    ]
-    session_id = agent.create_session(session_name="OCP_Slack_demo")
+        "List all the pods in the {namespace} namespace",
+        "Send a message with the pods name to demo channel the on Slack",]
+    session_id = agent_instance.create_session(session_name=f"session_{int(time.time())}")
     for i, prompt in enumerate(user_prompts):
         response = agent_instance.create_turn(
             messages=[
@@ -192,7 +186,7 @@ def run_agent_monitoring(agent_instance, target_namespace, use_stream=False):
         )
         step_logger(response.steps)
 
-    logger.info("Agent monitoring cycle completed.")
+    logger.info("Agent cycle completed.")
 
 if __name__ == "__main__":
     client = create_client()
@@ -200,9 +194,9 @@ if __name__ == "__main__":
     agent = create_agent(client)
     while True:
         try:
-            run_agent_monitoring(agent, namespace) # Pass your agent instance and namespace
+            run_task(agent)
         except Exception as e:
-            print(f"An error occurred during agent monitoring: {e}")
+            print(f"An error occurred during agent execution: {e}")
             # Implement more robust error handling if needed, e.g., logging to a file
 
         print(f"Waiting for 5 minutes before next check... (Next check at {time.ctime(time.time() + 300)})")

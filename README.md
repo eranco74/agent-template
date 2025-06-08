@@ -37,13 +37,13 @@ python main.py
 ### Creating Your Own Agent
 
 1. **Define your agent's logic**:
-   - Explore the `agents/` directory (or similar). You can create a new Python file for your agent's specific logic and define its behavior, tools, and objectives.
+   - Update the system prompts for your agent's specific logic and define its behavior, tools, and objectives.
 
 2. **Configure your agent**:
-   - Modify the configuration files (e.g., `config.py` or `.yaml` files) to define your agent's parameters, models, and tools.
+   - Modify the configuration files (e.g., `deployment.yaml`) to define your agent's parameters, models, and tools.
 
 3. **Integrate tools**:
-   - Implement or integrate external tools that your agent can use to interact with the environment (e.g., web search, API calls, database access). Place them in `tools/` or a similar dedicated directory.
+   - Implement or integrate external tools that your agent can use to interact with the environment (e.g., web search, API calls, database access).
 
 ## Contributing
 
